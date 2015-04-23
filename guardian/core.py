@@ -105,9 +105,15 @@ class ObjectPermissionChecker(object):
                 # the results to avoid a slow query
                 user_perms_qs = perms_qs.filter(**user_filters)
                 user_perms = user_perms_qs.values_list("codename", flat=True)
-                group_perms_qs = perms_qs.filter(**group_filters)
-                group_perms = group_perms_qs.values_list("codename", flat=True)
-                perms = list(set(chain(user_perms, group_perms)))
+
+                #if user has no permissions get group permissions
+                if not user_perms:
+                    group_perms_qs = perms_qs.filter(**group_filters)
+                    group_perms = group_perms_qs.values_list("codename", flat=True)
+                    perms = group_perms
+                else:
+                    perms = user_perms
+
             else:
                 perms = list(set(chain(*Permission.objects
                     .filter(content_type=ctype)
